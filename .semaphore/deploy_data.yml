@@ -1,0 +1,14 @@
+version: v1.0
+name: Deploy Data
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu1804
+blocks:
+  - name: Data deployment
+    task:
+      jobs:
+        - name: Deploy Data
+          commands:
+            - '# artifacts pull workflow data'
+            - '# make deploy'

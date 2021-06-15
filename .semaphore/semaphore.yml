@@ -1,1 +1,95 @@
-
+version: v1.0
+name: Complex pipeline without dependencies
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu1804
+blocks:
+  - name: Setup/Design
+    task:
+      jobs:
+        - name: Build Setup/Design
+          commands:
+            - '# build design'
+            - '# artifact push workflow design/build.tar'
+            - echo 123
+    dependencies: []
+  - name: Function - F1
+    run:
+      when: 'change_in([''functions/f1.js'', ''functions/helper.js'']) '
+    dependencies:
+      - Setup/Design
+    task:
+      jobs:
+        - name: Build F1
+          commands:
+            - '# artifacts pull workflow design/'
+            - '# build functions/f1.js'
+            - '# artifact push workflow functions/f1.tar'
+  - name: Funtions - F2
+    run:
+      when: 'change_in([''functions/f2.js'', ''functions/helper.js'']) '
+    dependencies:
+      - Setup/Design
+    task:
+      jobs:
+        - name: Build F2
+          commands:
+            - '# artifacts pull workflow design/'
+            - '# build functions/f2.js'
+            - '# artifact push workflow functions/f2.tar'
+  - name: Data
+    dependencies:
+      - Function - F1
+      - Funtions - F2
+    run:
+      when: 'change_in(''functions/'') or change_in(''data/'') '
+    task:
+      jobs:
+        - name: Build Data
+          commands:
+            - '# artifacts pull workflow design/'
+            - '# artifacts pull workflow functions/'
+            - '# build data'
+            - '# artifacts push workflow data/'
+  - name: App 1
+    dependencies:
+      - Data
+    run:
+      when: change_in('functions/') or change_in('data/')  or change_in('apps/app1/')
+    task:
+      jobs:
+        - name: Build App 1
+          commands:
+            - '# artifacts pull workflow design/'
+            - '# artifacts pull workflow functions/'
+            - '# artifacts pull workflow data/'
+            - '# build apps/app1'
+            - '# artifacts push workflow apps/app1'
+  - name: App 2
+    dependencies:
+      - Data
+    run:
+      when: change_in('functions/') or change_in('data/')  or change_in('apps/app1/')
+    task:
+      jobs:
+        - name: Build App 2
+          commands:
+            - '# artifacts pull workflow design/'
+            - '# artifacts pull workflow functions/'
+            - '# artifacts pull workflow data/'
+            - '# build apps/app2'
+            - '# artifacts push workflow apps/app2'
+promotions:
+  - name: Deploy Functions
+    pipeline_file: deploy_functions.yml
+    auto_promote:
+      when: branch = 'master' AND result = 'passed' AND change_in('functions/')
+  - name: Deploy Data
+    pipeline_file: deploy_data.yml
+    auto_promote:
+      when: 'branch = ''master'' AND result = ''passed'' AND change_in([''functions/'', ''data/''])'
+  - name: Deploy Apps
+    pipeline_file: deploy_apps.yml
+    auto_promote:
+      when: 'branch = ''master'' AND result = ''passed'' AND change_in([''functions/'', ''data/'', ''apps/''])'

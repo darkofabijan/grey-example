@@ -1,0 +1,27 @@
+version: v1.0
+name: Deploy Apps
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu1804
+blocks:
+  - name: App 1 deployment
+    task:
+      jobs:
+        - name: Deploy App 1
+          commands:
+            - '# artifacts pull workflow apps/app1'
+            - '# make deploy'
+    run:
+      when: change_in('functions/') or change_in('data/')  or change_in('apps/app1/')
+    dependencies: []
+  - name: App 2 deployment
+    run:
+      when: change_in('functions/') or change_in('data/')  or change_in('apps/app2/')
+    dependencies: []
+    task:
+      jobs:
+        - name: Deploy App 2
+          commands:
+            - '# artifacts pull workflow apps/app2'
+            - '# make deploy'

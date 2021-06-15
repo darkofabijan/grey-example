@@ -1,0 +1,27 @@
+version: v1.0
+name: Deploy Functions
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu1804
+blocks:
+  - name: Functions - F1
+    task:
+      jobs:
+        - name: Deploy
+          commands:
+            - '# artifacts pull workflow functions/f1'
+            - '# make deploy'
+    run:
+      when: change_in('functions/f1.js') or change_in('data/')
+    dependencies: []
+  - name: Functions - F2
+    task:
+      jobs:
+        - name: Deploy
+          commands:
+            - '# artifacts pull workflow functions/f2'
+            - '# make deploy'
+    run:
+      when: change_in('functions/f2.js') or change_in('data/')
+    dependencies: []
